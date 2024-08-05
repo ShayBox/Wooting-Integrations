@@ -27,6 +27,7 @@ pub const WOOTING_TWO_KEY_CODE_LIMIT: u32 = 116;
 
 /* Types */
 pub type Matrix = [[u16; WOOTING_RGB_COLS]; WOOTING_RGB_ROWS];
+pub type Response = [u8; WOOTING_RESPONSE_SIZE];
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -216,12 +217,23 @@ impl Keyboard {
     /// Will return `Err` if `HidDevice::send_feature_report` fails.
     ///
     /// # Panics
-    /// Will panic if command is not 8 bytes long.
-    pub fn send_command(&self, command: Command, p0: u8, p1: u8, p2: u8, p3: u8) -> HidResult<()> {
+    /// Will panic if command is not 8 bytes long or response is not 256 bytes long.
+    pub fn send_command(
+        &self,
+        command: Command,
+        p0: u8,
+        p1: u8,
+        p2: u8,
+        p3: u8,
+    ) -> HidResult<Response> {
         let buf = [0, 0xD0, 0xDA, command as u8, p3, p2, p1, p0];
         assert!(buf.len() == WOOTING_COMMAND_SIZE, "Invalid command size");
         self.0.send_feature_report(&buf)?;
 
-        Ok(())
+        let mut buf = [0u8; WOOTING_RESPONSE_SIZE];
+        let buf_len = self.0.read_timeout(&mut buf, 1000)?;
+        assert!(buf_len == WOOTING_RESPONSE_SIZE, "Invalid command size");
+
+        Ok(buf)
     }
 }

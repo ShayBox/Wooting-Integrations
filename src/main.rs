@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     keyboard.send_command(Command::WootDevResetAll, 0, 0, 0, 0)?;
     keyboard.send_command(Command::WootDevInit, 0, 0, 0, 0)?;
 
-    // TODO: Split the Rainbow Animation and Hyprland integration into separate opt-out features
+    // TODO: Split the Rainbow Animation and Hyprlanwwd integration into separate opt-out features
 
     /* Rainbow Animation: State */
     let instant = Instant::now();
@@ -30,6 +30,9 @@ fn main() -> Result<()> {
         /* Hyprland: Loop */
         let active_workspace = Workspace::get_active()?;
         workspaces.insert(active_workspace.monitor_id, active_workspace.id);
+
+        /* Wooting: State */
+        let index = keyboard.send_command(Command::GetCurrentKeyboardProfileIndex, 0, 0, 0, 0)?[5];
 
         /* Loop over rows */
         for (row, matrix) in matrix.iter_mut().enumerate() {
@@ -66,7 +69,10 @@ fn main() -> Result<()> {
                     }
                 }
 
-                // TODO: Wooting profile indicator
+                /* Wooting: Iteration */
+                if row == 0 && col == 17 + index as usize {
+                    rgba = [u8::MAX; 4];
+                }
 
                 *pixel = KeyColor::from(rgba).0;
             }

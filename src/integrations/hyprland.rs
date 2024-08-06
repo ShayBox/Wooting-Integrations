@@ -6,7 +6,7 @@ use hyprland::{
 };
 use memoize::memoize;
 
-use crate::Keyboard;
+use crate::{Keyboard, Rgb};
 
 use super::Integration;
 
@@ -16,38 +16,36 @@ pub struct Hyprland {
 }
 
 impl Integration for Hyprland {
-    fn color(&mut self, rgba: &mut [u8; 4], pos: (usize, usize), _: &Keyboard) {
+    fn color(&mut self, _: &Keyboard, rgba: &mut Rgb, pos: (usize, usize)) {
         self.active = get_cached_active(self.active.clone());
 
         for id in get_cached_workspaces() {
-            if pos == Self::get_pos_from_workspace(&id) {
-                *rgba = [u8::MIN; 4];
+            if pos == get_pos_from_workspace(id) {
+                *rgba = [u8::MIN; 3];
             }
         }
 
         for id in self.active.values() {
-            if pos == Self::get_pos_from_workspace(id) {
-                *rgba = [u8::MAX; 4];
+            if pos == get_pos_from_workspace(*id) {
+                *rgba = [u8::MAX; 3];
             }
         }
     }
 }
 
-impl Hyprland {
-    #[must_use]
-    pub const fn get_pos_from_workspace(id: &i32) -> (usize, usize) {
-        match id {
-            1 => (4, 17),
-            2 => (4, 18),
-            3 => (4, 19),
-            4 => (3, 17),
-            5 => (3, 18),
-            6 => (3, 19),
-            7 => (2, 17),
-            8 => (2, 18),
-            9 => (2, 19),
-            _ => (0, 0),
-        }
+#[must_use]
+pub const fn get_pos_from_workspace(id: i32) -> (usize, usize) {
+    match id {
+        1 => (4, 17),
+        2 => (4, 18),
+        3 => (4, 19),
+        4 => (3, 17),
+        5 => (3, 18),
+        6 => (3, 19),
+        7 => (2, 17),
+        8 => (2, 18),
+        9 => (2, 19),
+        _ => (0, 0),
     }
 }
 

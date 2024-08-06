@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use colorgrad::{preset::SinebowGradient, Gradient};
 
-use crate::{Keyboard, WOOTING_RGB_COLS, WOOTING_RGB_ROWS};
+use crate::{Keyboard, Rgb, WOOTING_RGB_COLS, WOOTING_RGB_ROWS};
 
 use super::Integration;
 
@@ -22,7 +22,7 @@ impl Default for Animation {
 }
 
 impl Integration for Animation {
-    fn color(&mut self, rgba: &mut [u8; 4], (col, row): (usize, usize), _: &Keyboard) {
+    fn color(&mut self, _: &Keyboard, rgb: &mut Rgb, (col, row): (usize, usize)) {
         #[allow(clippy::cast_precision_loss)]
         let (x, y) = (
             col as f32 / (WOOTING_RGB_COLS - 1) as f32 / 2.0,
@@ -33,7 +33,8 @@ impl Integration for Animation {
         let progress = (elapsed / -3.0) % 1.0;
         let position = (x + y + progress) % 1.0;
         let color = self.gradient.at(position);
+        let rgba = color.to_rgba8();
 
-        *rgba = color.to_rgba8();
+        rgb.copy_from_slice(&rgba[0..3]);
     }
 }

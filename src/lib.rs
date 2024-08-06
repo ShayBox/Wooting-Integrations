@@ -28,6 +28,7 @@ pub const WOOTING_ONE_KEY_CODE_LIMIT: u32 = 95;
 pub const WOOTING_TWO_KEY_CODE_LIMIT: u32 = 116;
 
 /* Types */
+pub type Rgb = [u8; 3];
 pub type RgbMatrix = [[u16; WOOTING_RGB_COLS]; WOOTING_RGB_ROWS];
 pub type Response = [u8; WOOTING_RESPONSE_SIZE];
 
@@ -146,17 +147,9 @@ pub enum Product {
 
 pub struct KeyColor(pub u16);
 
-/* RGBA to RGB */
-impl From<[u8; 4]> for KeyColor {
-    fn from([r, g, b, _]: [u8; 4]) -> Self {
-        Self::from([r, g, b])
-    }
-}
-
-/* RGB to EncodedColor */
-impl From<[u8; 3]> for KeyColor {
+impl From<Rgb> for KeyColor {
     #[allow(clippy::cast_lossless)] // Lossy
-    fn from([r, g, b]: [u8; 3]) -> Self {
+    fn from([r, g, b]: Rgb) -> Self {
         let mut encode = 0;
 
         encode |= ((r & 0xf8) as u16) << 8;
@@ -167,10 +160,7 @@ impl From<[u8; 3]> for KeyColor {
     }
 }
 
-pub struct Keyboard {
-    pub device: HidDevice,
-    pub matrix: RgbMatrix,
-}
+pub struct Keyboard(HidDevice);
 
 impl Keyboard {
     /// # Find a matching keyboard
@@ -187,10 +177,7 @@ impl Keyboard {
             .context("Couldn't find device")?
             .open_device(&api)?;
 
-        Ok(Self {
-            device,
-            matrix: RgbMatrix::default(),
-        })
+        Ok(Self(device))
     }
 
     /// # Send an RGB matrix to the device
@@ -200,9 +187,8 @@ impl Keyboard {
     ///
     /// # Panics
     /// Will panic if buffer is not 257 bytes long.
-    pub fn send_rgb_matrix(&self) -> HidResult<()> {
-        let src = self
-            .matrix
+    pub fn send_rgb_matrix(&self, matrix: RgbMatrix) -> HidResult<()> {
+        let src = matrix
             .into_iter()
             .flatten()
             .flat_map(u16::to_le_bytes)
@@ -215,7 +201,7 @@ impl Keyboard {
         buf[4..(4 + src.len())].copy_from_slice(&src);
 
         assert!(buf.len() == WOOTING_REPORT_SIZE, "Invalid command size");
-        self.device.write(&buf)?;
+        self.0.write(&buf)?;
 
         Ok(())
     }
@@ -237,12 +223,33 @@ impl Keyboard {
     ) -> HidResult<Response> {
         let buf = [0, 0xD0, 0xDA, command as u8, p3, p2, p1, p0];
         assert!(buf.len() == WOOTING_COMMAND_SIZE, "Invalid command size");
-        self.device.send_feature_report(&buf)?;
+        self.0.send_feature_report(&buf)?;
 
         let mut buf = [0u8; WOOTING_RESPONSE_SIZE];
-        let buf_len = self.device.read_timeout(&mut buf, 1000)?;
+        let buf_len = self.0.read_timeout(&mut buf, 1000)?;
         assert!(buf_len == WOOTING_RESPONSE_SIZE, "Invalid command size");
 
         Ok(buf)
+    }
+
+    /// # Update keyboard RGB with integrations
+    ///
+    /// # Errors
+    /// Will return `Err` if `Self::send_rgb_matrix` fails.
+    pub fn update<F>(&self, f: &mut F) -> HidResult<()>
+    where
+        F: FnMut(&Self, &mut Rgb, (usize, usize)),
+    {
+        let mut rgb = Rgb::default();
+        let mut matrix = RgbMatrix::default();
+        for (col, scanline) in matrix.iter_mut().enumerate() {
+            for (row, pixel) in scanline.iter_mut().enumerate() {
+                f(self, &mut rgb, (col, row));
+
+                *pixel = KeyColor::from(rgb).0;
+            }
+        }
+
+        self.send_rgb_matrix(matrix)
     }
 }

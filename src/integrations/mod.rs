@@ -1,4 +1,4 @@
-use crate::Keyboard;
+use crate::{Keyboard, Rgb};
 
 #[cfg(feature = "animation")]
 mod animation;
@@ -12,5 +12,5 @@ mod wooting;
 pub mod prelude;
 
 pub trait Integration {
-    fn color(&mut self, rgba: &mut [u8; 4], pos: (usize, usize), keyboard: &Keyboard);
+    fn color(&mut self, keyboard: &Keyboard, rgb: &mut Rgb, pos: (usize, usize));
 }

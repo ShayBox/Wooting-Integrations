@@ -2,7 +2,7 @@ use std::{process::Command, time::Duration};
 
 use memoize::memoize;
 
-use crate::Keyboard;
+use crate::{Keyboard, Rgb};
 
 use super::Integration;
 
@@ -24,15 +24,15 @@ macro_rules! run {
 pub struct Mangohud(());
 
 impl Integration for Mangohud {
-    fn color(&mut self, rgba: &mut [u8; 4], pos: (usize, usize), _: &Keyboard) {
+    fn color(&mut self, _: &Keyboard, rgb: &mut Rgb, pos: (usize, usize)) {
         if pos != (0, 0) {
             return;
         }
 
-        *rgba = match get_cached_framerate() {
-            0.0..24.0 => [255, 0, 0, 0],
-            24.0..48.0 => [255, 255, 0, 0],
-            48.0..96.0 => [0, 255, 0, 0],
+        *rgb = match get_cached_framerate() {
+            0.0..24.0 => [255, 0, 0],
+            24.0..48.0 => [255, 255, 0],
+            48.0..96.0 => [0, 255, 0],
             _ => return,
         };
     }

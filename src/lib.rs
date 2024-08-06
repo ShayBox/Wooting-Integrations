@@ -1,3 +1,5 @@
+pub mod integrations;
+
 use anyhow::{Context, Result};
 use hidapi::{HidApi, HidDevice, HidResult};
 

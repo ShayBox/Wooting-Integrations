@@ -1,6 +1,6 @@
 [package]
 name = "wooting-integrations"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "My personal Wooting keyboard integrations"
@@ -15,12 +15,14 @@ anyhow = "1"
 colorgrad = { version = "0.7", optional = true }
 hidapi = { version = "2", default-features = false }
 hyprland = { version = "0.4.0-alpha.2", optional = true }
+memoize = { version = "0.4", optional = true }
 
 [features]
-default = ["hyprland", "rainbow", "wooting", "hidapi/linux-shared-hidraw"]
-hyprland = ["dep:hyprland"]
-rainbow = ["dep:colorgrad"]
-wooting = []
+default = ["animation", "hyprland", "mangohud", "wooting", "hidapi/linux-shared-hidraw"]
+animation = ["dep:colorgrad"]
+hyprland = ["dep:hyprland", "dep:memoize"]
+mangohud = []
+wooting = ["dep:memoize"]
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }

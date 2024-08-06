@@ -1,42 +1,29 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
-use anyhow::Result;
 use hyprland::{
     data::{Workspace, Workspaces},
     shared::{HyprData, HyprDataActive},
 };
+use memoize::memoize;
 
 use crate::Keyboard;
 
 use super::Integration;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Hyprland {
     active: HashMap<i128, i32>,
-    workspaces: Vec<i32>,
 }
 
 impl Integration for Hyprland {
-    fn next(&mut self, _keyboard: &Keyboard) -> Result<()> {
-        let active = Workspace::get_active()?;
-        self.active.insert(active.monitor_id, active.id);
-        self.workspaces = Workspaces::get()?
-            .into_iter()
-            .map(|workspace| workspace.id)
-            .filter(|id| *id > 0)
-            .collect();
-
-        Ok(())
-    }
-
-    fn color(&mut self, rgba: &mut [u8; 4], pos: (usize, usize)) {
-        for id in &self.workspaces {
-            if pos == Self::get_pos_from_workspace(id) {
+    fn color(&mut self, rgba: &mut [u8; 4], pos: (usize, usize), _: &Keyboard) {
+        for id in get_cached_workspaces() {
+            if pos == Self::get_pos_from_workspace(&id) {
                 *rgba = [u8::MIN; 4];
             }
         }
 
-        for id in self.active.values() {
+        for id in get_cached_active(self.active.clone()).values() {
             if pos == Self::get_pos_from_workspace(id) {
                 *rgba = [u8::MAX; 4];
             }
@@ -60,4 +47,21 @@ impl Hyprland {
             _ => (0, 0),
         }
     }
+}
+
+#[memoize(Ignore: active, TimeToLive: Duration::from_millis(100))]
+pub fn get_cached_active(mut active: HashMap<i128, i32>) -> HashMap<i128, i32> {
+    let workspace = Workspace::get_active().expect("Failed to get active");
+    active.insert(workspace.monitor_id, workspace.id);
+    active
+}
+
+#[memoize(TimeToLive: Duration::from_secs(1))]
+pub fn get_cached_workspaces() -> Vec<i32> {
+    Workspaces::get()
+        .expect("Failed to get workspaces")
+        .into_iter()
+        .map(|workspace| workspace.id)
+        .filter(|id| *id > 0)
+        .collect()
 }

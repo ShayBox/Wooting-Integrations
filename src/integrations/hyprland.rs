@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use anyhow::Result;
 use hyprland::{data::Workspace, shared::HyprDataActive};
 
+use crate::Keyboard;
+
 use super::Integration;
 
 #[derive(Default)]
@@ -11,7 +13,7 @@ pub struct Hyprland {
 }
 
 impl Integration for Hyprland {
-    fn next(&mut self) -> Result<()> {
+    fn next(&mut self, _keyboard: &Keyboard) -> Result<()> {
         let workspace = Workspace::get_active()?;
         self.workspaces.insert(workspace.monitor_id, workspace.id);
 

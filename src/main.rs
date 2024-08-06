@@ -1,45 +1,44 @@
 use anyhow::Result;
-use wooting_integrations::{
-    integrations::prelude::*, Command, KeyColor, Keyboard, Matrix, Product,
-};
+#[allow(unused_imports)]
+use wooting_integrations::integrations::prelude::*;
+use wooting_integrations::{Command, KeyColor, Keyboard, Product};
 
 fn main() -> Result<()> {
-    /* Try to find, reset, and initialize the device */
-    let keyboard = Keyboard::find(Product::WootingTwoLe)?;
+    let mut keyboard = Keyboard::find(Product::WootingTwoLe)?;
     keyboard.send_command(Command::WootDevResetAll, 0, 0, 0, 0)?;
     keyboard.send_command(Command::WootDevInit, 0, 0, 0, 0)?;
 
-    let mut matrix = Matrix::default();
     #[cfg(feature = "rainbow")]
     let mut rainbow = Rainbow::default();
     #[cfg(feature = "hyprland")]
     let mut hyprland = Hyprland::default();
+    #[cfg(feature = "wooting")]
+    let mut wooting = Wooting::default();
 
     loop {
-        rainbow.next()?;
-        hyprland.next()?;
+        #[cfg(feature = "rainbow")]
+        rainbow.next(&keyboard)?;
+        #[cfg(feature = "hyprland")]
+        hyprland.next(&keyboard)?;
+        #[cfg(feature = "wooting")]
+        wooting.next(&keyboard)?;
 
-        /* Wooting: State */
-        let index = keyboard.send_command(Command::GetCurrentKeyboardProfileIndex, 0, 0, 0, 0)?[5];
-
-        for (col, line) in matrix.iter_mut().enumerate() {
-            for (row, pixel) in line.iter_mut().enumerate() {
+        for (col, scanline) in keyboard.matrix.iter_mut().enumerate() {
+            for (row, pixel) in scanline.iter_mut().enumerate() {
+                #[allow(clippy::useless_let_if_seq)]
                 let mut rgba = [0u8; 4];
 
+                #[cfg(feature = "rainbow")]
                 rainbow.color(&mut rgba, (col, row));
+                #[cfg(feature = "hyprland")]
                 hyprland.color(&mut rgba, (col, row));
-
-                /* Wooting: Iteration */
-                if row == 0 && col == 17 + index as usize {
-                    rgba = [u8::MAX; 4];
-                }
+                #[cfg(feature = "wooting")]
+                wooting.color(&mut rgba, (col, row));
 
                 *pixel = KeyColor::from(rgba).0;
             }
         }
 
-        keyboard.send_buffer(matrix)?;
-
-        // std::thread::sleep(std::time::Duration::from_millis(15));
+        keyboard.send_rgb_matrix()?;
     }
 }

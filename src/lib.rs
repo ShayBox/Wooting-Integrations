@@ -28,7 +28,7 @@ pub const WOOTING_ONE_KEY_CODE_LIMIT: u32 = 95;
 pub const WOOTING_TWO_KEY_CODE_LIMIT: u32 = 116;
 
 /* Types */
-pub type Matrix = [[u16; WOOTING_RGB_COLS]; WOOTING_RGB_ROWS];
+pub type RgbMatrix = [[u16; WOOTING_RGB_COLS]; WOOTING_RGB_ROWS];
 pub type Response = [u8; WOOTING_RESPONSE_SIZE];
 
 #[allow(non_camel_case_types)]
@@ -167,7 +167,10 @@ impl From<[u8; 3]> for KeyColor {
     }
 }
 
-pub struct Keyboard(HidDevice);
+pub struct Keyboard {
+    pub device: HidDevice,
+    pub matrix: RgbMatrix,
+}
 
 impl Keyboard {
     /// # Find a matching keyboard
@@ -184,18 +187,22 @@ impl Keyboard {
             .context("Couldn't find device")?
             .open_device(&api)?;
 
-        Ok(Self(device))
+        Ok(Self {
+            device,
+            matrix: RgbMatrix::default(),
+        })
     }
 
-    /// # Send an RGB buffer to the device
+    /// # Send an RGB matrix to the device
     ///
     /// # Errors
     /// Will return `Err` if `HidDevice::write` fails.
     ///
     /// # Panics
     /// Will panic if buffer is not 257 bytes long.
-    pub fn send_buffer(&self, matrix: Matrix) -> HidResult<()> {
-        let src = matrix
+    pub fn send_rgb_matrix(&self) -> HidResult<()> {
+        let src = self
+            .matrix
             .into_iter()
             .flatten()
             .flat_map(u16::to_le_bytes)
@@ -208,7 +215,7 @@ impl Keyboard {
         buf[4..(4 + src.len())].copy_from_slice(&src);
 
         assert!(buf.len() == WOOTING_REPORT_SIZE, "Invalid command size");
-        self.0.write(&buf)?;
+        self.device.write(&buf)?;
 
         Ok(())
     }
@@ -230,10 +237,10 @@ impl Keyboard {
     ) -> HidResult<Response> {
         let buf = [0, 0xD0, 0xDA, command as u8, p3, p2, p1, p0];
         assert!(buf.len() == WOOTING_COMMAND_SIZE, "Invalid command size");
-        self.0.send_feature_report(&buf)?;
+        self.device.send_feature_report(&buf)?;
 
         let mut buf = [0u8; WOOTING_RESPONSE_SIZE];
-        let buf_len = self.0.read_timeout(&mut buf, 1000)?;
+        let buf_len = self.device.read_timeout(&mut buf, 1000)?;
         assert!(buf_len == WOOTING_RESPONSE_SIZE, "Invalid command size");
 
         Ok(buf)

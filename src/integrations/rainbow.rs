@@ -3,7 +3,7 @@ use std::time::Instant;
 use anyhow::Result;
 use colorgrad::{preset::SinebowGradient, Gradient};
 
-use crate::{WOOTING_RGB_COLS, WOOTING_RGB_ROWS};
+use crate::{Keyboard, WOOTING_RGB_COLS, WOOTING_RGB_ROWS};
 
 use super::Integration;
 
@@ -25,7 +25,7 @@ impl Default for Rainbow {
 }
 
 impl Integration for Rainbow {
-    fn next(&mut self) -> Result<()> {
+    fn next(&mut self, _keyboard: &Keyboard) -> Result<()> {
         let elapsed = self.instant.elapsed().as_secs_f32();
         self.progress = (elapsed / -3.0) % 1.0;
 

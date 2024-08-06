@@ -17,13 +17,15 @@ pub struct Hyprland {
 
 impl Integration for Hyprland {
     fn color(&mut self, rgba: &mut [u8; 4], pos: (usize, usize), _: &Keyboard) {
+        self.active = get_cached_active(self.active.clone());
+
         for id in get_cached_workspaces() {
             if pos == Self::get_pos_from_workspace(&id) {
                 *rgba = [u8::MIN; 4];
             }
         }
 
-        for id in get_cached_active(self.active.clone()).values() {
+        for id in self.active.values() {
             if pos == Self::get_pos_from_workspace(id) {
                 *rgba = [u8::MAX; 4];
             }

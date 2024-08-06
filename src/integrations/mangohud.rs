@@ -42,7 +42,6 @@ impl Integration for Mangohud {
 pub fn get_cached_framerate() -> f64 {
     const DIR: &str = "/tmp/mangohud";
     let file = run!("ls -t {DIR} | head -n 1");
-    let line = run!("tail -n 1 {DIR}/{file}");
-    let fps = run!("echo '{line}' | cut -d',' -f1");
+    let fps = run!("tail -n 1 {DIR}/{file} | cut -d',' -f1");
     fps.trim().parse::<f64>().unwrap_or_default()
 }

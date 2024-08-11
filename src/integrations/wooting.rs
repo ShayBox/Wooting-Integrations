@@ -22,7 +22,7 @@ impl Integration for Wooting {
 #[memoize(Ignore: keyboard, TimeToLive: Duration::from_secs(1))]
 pub fn get_profile_index(keyboard: &Keyboard) -> Result<u8, &'static str> {
     keyboard
-        .send_command(Command::GetCurrentKeyboardProfileIndex, 0, 0, 0, 0)
+        .send_command_with_args(Command::GetCurrentKeyboardProfileIndex, 0, 0, 0, 0)
         .map_err(|_| "Failed to get current keyboard profile index")
         .map(|response| response[5])
 }

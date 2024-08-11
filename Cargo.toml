@@ -1,6 +1,6 @@
 [package]
 name = "wooting-integrations"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "My personal Wooting keyboard integrations"

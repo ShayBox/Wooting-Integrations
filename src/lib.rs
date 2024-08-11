@@ -213,7 +213,18 @@ impl Keyboard {
     ///
     /// # Panics
     /// Will panic if command is not 8 bytes long or response is not 256 bytes long.
-    pub fn send_command(
+    pub fn send_command(&self, command: Command) -> HidResult<Response> {
+        self.send_command_with_args(command, 0, 0, 0, 0)
+    }
+
+    /// # Send an RGB buffer to the device
+    ///
+    /// # Errors
+    /// Will return `Err` if `HidDevice::send_feature_report` fails.
+    ///
+    /// # Panics
+    /// Will panic if command is not 8 bytes long or response is not 256 bytes long.
+    pub fn send_command_with_args(
         &self,
         command: Command,
         p0: u8,
@@ -242,8 +253,8 @@ impl Keyboard {
     {
         let mut rgb = Rgb::default();
         let mut matrix = RgbMatrix::default();
-        for (col, scanline) in matrix.iter_mut().enumerate() {
-            for (row, pixel) in scanline.iter_mut().enumerate() {
+        for (row, scanline) in matrix.iter_mut().enumerate() {
+            for (col, pixel) in scanline.iter_mut().enumerate() {
                 f(self, &mut rgb, (col, row));
 
                 *pixel = KeyColor::from(rgb).0;

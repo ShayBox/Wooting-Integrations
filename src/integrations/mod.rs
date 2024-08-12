@@ -4,6 +4,8 @@ use crate::{Keyboard, Rgb};
 mod animation;
 #[cfg(feature = "hyprland")]
 mod hyprland;
+#[cfg(feature = "latency")]
+mod latency;
 #[cfg(feature = "mangohud")]
 mod mangohud;
 #[cfg(feature = "wooting")]

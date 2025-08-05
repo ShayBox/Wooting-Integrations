@@ -1,15 +1,18 @@
-use std::{
-    io::Write,
-    time::{Duration, Instant},
-};
+use std::time::Duration;
 
-use anyhow::Result;
 #[allow(unused_imports)]
 use wooting_integrations::integrations::prelude::*;
-use wooting_integrations::{Command, Keyboard, Product};
+use wooting_integrations::wooting::{Command, Keyboard, Product};
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     loop {
+        /* Check if Wootility is running */
+        if wooting_integrations::is_wootility_running() {
+            eprintln!("Error: Wootility process is running, waiting...");
+            std::thread::sleep(Duration::from_secs(1));
+            continue;
+        }
+
         /* Keep searching for the keyboard until you find one */
         let Ok(keyboard) = Keyboard::find(Product::WootingTwoLe) else {
             eprintln!("Error: Couldn't find device, waiting...");
@@ -28,7 +31,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn start_integrations_loop(keyboard: &Keyboard) -> Result<()> {
+fn start_integrations_loop(keyboard: &Keyboard) -> anyhow::Result<()> {
     #[cfg(feature = "latency")]
     let mut latency = Latency::default();
     let mut integrations: Vec<Box<dyn Integration>> = vec![
@@ -44,7 +47,7 @@ fn start_integrations_loop(keyboard: &Keyboard) -> Result<()> {
 
     loop {
         #[cfg(feature = "latency")]
-        let instant = Instant::now();
+        let instant = std::time::Instant::now();
 
         keyboard.update(&mut |keyboard, rgb, pos| {
             for integration in &mut integrations {
@@ -52,11 +55,15 @@ fn start_integrations_loop(keyboard: &Keyboard) -> Result<()> {
             }
         })?;
 
-        if cfg!(feature = "latency") {
+        #[cfg(feature = "latency")]
+        {
+            use std::io::Write;
+
             let elapsed = instant.elapsed();
+            let average = latency.average();
             latency.add(elapsed);
 
-            let average = latency.average();
+            println!("\rLatency: {elapsed:.1?}{}", " ".repeat(8));
             print!("\rAverage Latency: {average:.1?} ");
             std::io::stdout().flush()?;
         }

@@ -2,20 +2,18 @@ use std::time::Instant;
 
 use colorgrad::{preset::SinebowGradient, Gradient};
 
-use crate::{Keyboard, Rgb, WOOTING_RGB_COLS, WOOTING_RGB_ROWS};
-
 use super::Integration;
+use crate::wooting::{Keyboard, Rgb, WOOTING_RGB_COLS, WOOTING_RGB_ROWS};
 
 pub struct Animation {
-    pub instant: Instant,
+    pub instant:  Instant,
     pub gradient: SinebowGradient,
 }
 
 impl Default for Animation {
-    #[must_use]
     fn default() -> Self {
         Self {
-            instant: Instant::now(),
+            instant:  Instant::now(),
             gradient: SinebowGradient {},
         }
     }

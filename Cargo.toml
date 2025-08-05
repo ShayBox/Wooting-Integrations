@@ -1,6 +1,6 @@
 [package]
 name = "wooting-integrations"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "My personal Wooting keyboard integrations"
@@ -14,8 +14,8 @@ license = "MIT"
 anyhow = "1"
 colorgrad = { version = "0.7", optional = true }
 hidapi = { version = "2", default-features = false }
-hyprland = { version = "0.4.0-alpha.2", optional = true }
-memoize = { version = "0.4", optional = true }
+hyprland = { git = "https://github.com/hyprland-community/hyprland-rs", optional = true }
+memoize = { version = "0.5", optional = true }
 
 [features]
 default = ["animation", "hyprland", "latency", "mangohud", "wooting", "hidapi/linux-shared-hidraw"]

@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use memoize::memoize;
 
-use crate::{Command, Keyboard, Rgb};
+use crate::wooting::{Command, Keyboard, Rgb};
 
 use super::Integration;
 
@@ -12,8 +12,12 @@ pub struct Wooting(());
 impl Integration for Wooting {
     fn color(&mut self, keyboard: &Keyboard, rgb: &mut Rgb, (col, row): (usize, usize)) {
         if let Ok(profile_index) = get_profile_index(keyboard) {
-            if row == 0 && col == 17 + profile_index as usize {
-                *rgb = [u8::MAX; 3];
+            if row == 0 {
+                if col == 17 + profile_index as usize {
+                    *rgb = [u8::MAX; 3];
+                } else if (17..21).contains(&col) {
+                    *rgb = [u8::MIN; 3];
+                }
             }
         }
     }

@@ -6,9 +6,8 @@ use hyprland::{
 };
 use memoize::memoize;
 
-use crate::{Keyboard, Rgb};
-
 use super::Integration;
+use crate::wooting::{Keyboard, Rgb};
 
 #[derive(Clone, Default)]
 pub struct Hyprland {
@@ -52,7 +51,8 @@ pub const fn get_pos_from_workspace(id: i32) -> (usize, usize) {
 #[memoize(Ignore: active, TimeToLive: Duration::from_millis(100))]
 pub fn get_cached_active(mut active: HashMap<i128, i32>) -> HashMap<i128, i32> {
     let workspace = Workspace::get_active().expect("Failed to get active");
-    active.insert(workspace.monitor_id, workspace.id);
+    let monitor_id = workspace.monitor_id.expect("Failed to get monitor id");
+    active.insert(monitor_id, workspace.id);
     active
 }
 
